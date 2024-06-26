@@ -1,65 +1,58 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-const appSettings = {
+const appConfig = {
     databaseURL: "https://wrk-hrs-default-rtdb.europe-west1.firebasedatabase.app/"
-}
+};
 
-const app = initializeApp(appSettings)
-const database = getDatabase(app)
-const shoppingListInDB = ref(database, "shoppingList")
+const app = initializeApp(appConfig);
+const database = getDatabase(app);
+const itemsRef = ref(database, "items");
 
-const inputFieldEl = document.getElementById("input-field")
-const addButtonEl = document.getElementById("add-button")
-const shoppingListEl = document.getElementById("shopping-list")
+const inputEl = document.getElementById("input-field");
+const addButtonEl = document.getElementById("add-button");
+const itemsListEl = document.getElementById("items-list");
 
 addButtonEl.addEventListener("click", function() {
-    let inputValue = inputFieldEl.value
+    let inputValue = inputEl.value;
     
-    push(shoppingListInDB, inputValue)
+    push(itemsRef, inputValue);
     
-    clearInputFieldEl()
-})
+    clearInput();
+});
 
-onValue(shoppingListInDB, function(snapshot) {
+onValue(itemsRef, function(snapshot) {
     if (snapshot.exists()) {
-        let itemsArray = Object.entries(snapshot.val())
+        let itemsArray = Object.entries(snapshot.val());
     
-        clearShoppingListEl()
+        clearItemsList();
         
-        for (let i = 0; i < itemsArray.length; i++) {
-            let currentItem = itemsArray[i]
-            let currentItemID = currentItem[0]
-            let currentItemValue = currentItem[1]
-            
-            appendItemToShoppingListEl(currentItem)
-        }    
+        itemsArray.forEach(([id, value]) => {
+            appendItemToList(id, value);
+        });
     } else {
-        shoppingListEl.innerHTML = "No items here... yet"
+        itemsListEl.innerHTML = "No items here... yet";
     }
-})
+});
 
-function clearShoppingListEl() {
-    shoppingListEl.innerHTML = ""
+function clearItemsList() {
+    itemsListEl.innerHTML = "";
 }
 
-function clearInputFieldEl() {
-    inputFieldEl.value = ""
+function clearInput() {
+    inputEl.value = "";
 }
 
-function appendItemToShoppingListEl(item) {
-    let itemID = item[0]
-    let itemValue = item[1]
+function appendItemToList(id, value) {
+    let newEl = document.createElement("li");
     
-    let newEl = document.createElement("li")
-    
-    newEl.textContent = itemValue
+    newEl.textContent = value;
     
     newEl.addEventListener("dblclick", function() {
-        let exactLocationOfItemInDB = ref(database, `shoppingList/${itemID}`)
+        let itemRef = ref(database, `items/${id}`);
         
-        remove(exactLocationOfItemInDB)
-    })
+        remove(itemRef);
+    });
     
-    shoppingListEl.append(newEl)
+    itemsListEl.append(newEl);
 }
